@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armamento - Solo CSS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@600;900&display=swap" rel="stylesheet">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <style>
+        /* --- Variables y Reset --- */
+        :root {
+            --color-fondo: #0a0b0d;
+            --color-panel: #1e252f;
+            --color-borde: #3a414e;
+            --color-texto-claro: #e9ecef;
+            /* AZUL NEÓN MANTENIDO Y MEJORADO (MÁS BRILLO) */
+            --color-acento: #00BFFF;
+            /* Azul Cielo Brillante */
+            --color-acento-hover: #1E90FF;
+            /* Azul Doder (más intenso para hover) */
+            --sombra-neon: 0 0 10px rgba(0, 191, 255, 0.9), 0 0 25px rgba(0, 191, 255, 0.6);
+            /* Sombra NEÓN MUCHO más fuerte */
+            --sombra-sutil: 0 4px 15px rgba(0, 0, 0, 0.8);
+            --borde-delgado: 1px solid var(--color-acento);
+            /* Borde delgado de acento */
+            /* Variables para Compra */
+            --color-moneda: #c9e66d;
+            /* Verde Neo para botón de compra */
+            --color-bloqueo: #dc3545;
+            /* Rojo para Bloqueado */
+        }
+
+        /* Animación de Título (Sutil pulso de brillo) */
+        @keyframes pulse-neon {
+            0% {
+                text-shadow: var(--sombra-neon);
+            }
+
+            50% {
+                text-shadow: 0 0 15px var(--color-acento), 0 0 35px var(--color-acento-hover);
+            }
+
+            100% {
+                text-shadow: var(--sombra-neon);
+            }
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--color-fondo);
+            color: var(--color-texto-claro);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 0;
+            background-color: var(--color-panel);
+            border-bottom: var(--borde-delgado);
+            box-shadow: var(--sombra-sutil);
+        }
+
+        header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--color-acento);
+            text-shadow: var(--sombra-neon);
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            margin: 0;
+            animation: pulse-neon 4s infinite alternate ease-in-out;
+        }
+
+        /* --- DISPLAY DE CRÉDITOS --- */
+        .currency-display {
+            width: fit-content;
+            margin: 15px auto 25px auto;
+            z-index: 100;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-moneda);
+            text-shadow: 0 0 10px rgba(201, 230, 109, 0.5);
+            padding: 10px 30px;
+            border: 2px solid var(--color-moneda);
+            border-radius: 50px;
+            background-color: rgba(10, 11, 13, 0.85);
+            box-shadow: 0 0 15px rgba(201, 230, 109, 0.5);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Lógica de Ocultar/Mostrar Créditos (Mantenida) */
+        .currency-display .currency-total {
+            display: none;
+        }
+
+        .currency-display #credit-initial {
+            display: inline;
+        }
+
+        #arma5-unlocked:target~.currency-display #credit-initial {
+            display: none;
+        }
+
+        #arma5-unlocked:target~.currency-display #credit-after-5 {
+            display: inline;
+        }
+
+        #arma9-unlocked:target~.currency-display #credit-initial {
+            display: none;
+        }
+
+        #arma9-unlocked:target~.currency-display #credit-after-9 {
+            display: inline;
+        }
+        
+        /* --- Contenedor Principal y Visor --- */
+        main {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .visor-3d-area {
+            height: 60vh;
+            min-height: 450px;
+            background: linear-gradient(to top, #000, #1e252f);
+            border: 2px solid var(--color-acento);
+            box-shadow: var(--sombra-neon);
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Estilos base para los modelos y la info apilados */
+        .arma-model, .arma-info-display {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0;
+            transition: opacity 0.5s, transform 0.5s; pointer-events: none; transform: translateY(20px);
+        }
+
+        /* Información del Arma */
+        .arma-info-display {
+            width: 300px; height: auto; top: 40px; left: 40px; z-index: 10;
+            background: rgba(30, 37, 47, 0.8); backdrop-filter: blur(5px);
+            border: 1px solid var(--color-acento); border-left: 5px solid var(--color-acento);
+            padding: 20px; box-shadow: var(--sombra-sutil); pointer-events: none;
+        }
+
+        .arma-info-display h2 {
+            font-family: 'Orbitron', sans-serif; color: var(--color-acento-hover);
+            text-shadow: 0 0 5px var(--color-acento); margin: 0 0 8px 0; font-size: 1.5em;
+        }
+
+        .arma-info-display p {
+            margin: 5px 0; font-size: 0.95em; color: var(--color-texto-claro); pointer-events: none;
+        }
+
+        /* --- Estilos para la Sección de Estadísticas (RESTURADOS) --- */
+        .weapon-stats { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 191, 255, 0.3); }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.85em; font-family: 'Orbitron', sans-serif; text-transform: uppercase; }
+        .stat-name { color: var(--color-texto-claro); width: 100px; }
+        .stat-bar-container { flex-grow: 1; height: 8px; background-color: rgba(30, 37, 47, 0.5); border-radius: 4px; overflow: hidden; margin-left: 10px; box-shadow: 0 0 3px rgba(0, 0, 0, 0.5); }
+        .stat-bar { height: 100%; background-color: var(--color-acento); transition: width 0.5s ease-out; box-shadow: 0 0 8px var(--color-acento); }
+
+        /* --- Estilos para Bloqueo (Mantenidos) --- */
+        .arma-locked-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            background-color: rgba(10, 11, 13, 0.95); backdrop-filter: blur(4px);
+            z-index: 100; pointer-events: none; opacity: 1; transition: opacity 0.5s;
+        }
+
+        .tag-bloqueado {
+            font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--color-bloqueo);
+            text-shadow: 0 0 15px var(--color-bloqueo); margin-bottom: 25px;
+            border: 2px solid var(--color-bloqueo); padding: 10px 20px; letter-spacing: 5px;
+        }
+
+        .buy-button-overlay {
+            padding: 12px 30px; font-family: 'Orbitron', sans-serif; font-size: 1.1em; font-weight: 700;
+            color: var(--color-fondo); background-color: var(--color-moneda); border: 2px solid var(--color-moneda);
+            border-radius: 5px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(201, 230, 109, 0.8); text-decoration: none;
+        }
+        
+        .buy-button-overlay:hover {
+            box-shadow: 0 0 25px var(--color-moneda), 0 0 10px rgba(0, 0, 0, 0.5) inset; transform: scale(1.05);
+        }
+
+        /* --- Lógica CSS Mágica (Mantenida) --- */
+        .hidden-radio { display: none; }
+
+        /* Muestra el modelo y la info activa */
+        #select-arma1:checked ~ .visor-3d-area #model-arma1, #select-arma1:checked ~ .visor-3d-area #info-arma1,
+        #select-arma2:checked ~ .visor-3d-area #model-arma2, #select-arma2:checked ~ .visor-3d-area #info-arma2,
+        #select-arma3:checked ~ .visor-3d-area #model-arma3, #select-arma3:checked ~ .visor-3d-area #info-arma3,
+        #select-arma4:checked ~ .visor-3d-area #model-arma4, #select-arma4:checked ~ .visor-3d-area #info-arma4,
+        #select-arma5:checked ~ .visor-3d-area #model-arma5, #select-arma5:checked ~ .visor-3d-area #info-arma5,
+        #select-arma6:checked ~ .visor-3d-area #model-arma6, #select-arma6:checked ~ .visor-3d-area #info-arma6,
+        #select-arma7:checked ~ .visor-3d-area #model-arma7, #select-arma7:checked ~ .visor-3d-area #info-arma7,
+        #select-arma8:checked ~ .visor-3d-area #model-arma8, #select-arma8:checked ~ .visor-3d-area #info-arma8,
+        #select-arma9:checked ~ .visor-3d-area #model-arma9, #select-arma9:checked ~ .visor-3d-area #info-arma9,
+        #select-arma10:checked ~ .visor-3d-area #model-arma10, #select-arma10:checked ~ .visor-3d-area #info-arma10 {
+            opacity: 1; transform: scale(1.0) translateY(0); pointer-events: auto;
+        }
+
+        /* Muestra/Oculta el overlay de bloqueo */
+        #select-arma5:checked ~ .visor-3d-area #info-arma5 .arma-locked-overlay,
+        #select-arma9:checked ~ .visor-3d-area #info-arma9 .arma-locked-overlay { opacity: 1; pointer-events: auto; display: flex; }
+
+        #arma5-unlocked:target ~ .visor-3d-area #info-arma5 .arma-locked-overlay,
+        #arma9-unlocked:target ~ .visor-3d-area #info-arma9 .arma-locked-overlay { opacity: 0; pointer-events: none; display: none; }
+
+        /* Estilo para items de grilla bloqueados y desbloqueo */
+        .weapon-item.locked { filter: grayscale(100%) brightness(50%); border-color: var(--color-bloqueo); box-shadow: 0 0 10px var(--color-bloqueo); }
+
+        #arma5-unlocked:target ~ main .weapon-grid-container #grid-arma5,
+        #arma9-unlocked:target ~ main .weapon-grid-container #grid-arma9 { filter: none; border-color: var(--color-acento-hover); box-shadow: 0 0 15px var(--color-acento), 0 0 5px var(--color-acento-hover); }
+        
+        /* --- Grilla de Armas (Abajo) --- */
+        .weapon-grid-container { overflow-y: auto; padding: 10px 0; margin: 0 auto; max-width: 1100px; }
+        .weapon-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; }
+        .weapon-item { width: 180px; height: 130px; background-color: var(--color-panel); border: 1px solid var(--color-borde); cursor: pointer; transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 15px; }
+        .weapon-item:hover { border-color: var(--color-acento); box-shadow: 0 0 15px var(--color-acento), 0 0 8px var(--color-acento-hover); transform: translateY(-5px); }
+        .weapon-item-icon { width: 90%; height: 75%; object-fit: contain; margin: auto; filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.8)); }
+        .weapon-item-name { background-color: rgba(0, 0, 0, 0.7); padding: 5px 5px; font-size: 0.8em; text-align: center; color: #eee; font-family: 'Orbitron', sans-serif; }
+        model-viewer { width: 100%; height: 100%; margin: 0 auto; display: block; }
+
+        /* --- Estilos para los Botones de Navegación --- */
+        .navigation-buttons { display: flex; justify-content: center; gap: 40px; padding: 25px 0; margin-top: 30px; border-top: var(--borde-delgado); }
+        .nav-button { padding: 15px 40px; font-size: 1.2em; font-family: 'Orbitron', sans-serif; font-weight: 700; color: var(--color-fondo); background-color: var(--color-acento); border: 2px solid var(--color-acento); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; box-shadow: 0 0 20px var(--color-acento), 0 0 5px var(--color-fondo) inset; }
+        .nav-button:hover { background-color: var(--color-acento-hover); box-shadow: 0 0 30px var(--color-acento-hover), 0 0 15px var(--color-acento); transform: scale(1.05); }
+        .nav-button:active { transform: scale(0.95); background-color: var(--color-fondo); color: var(--color-acento); }
+    </style>
+</head>
+
+<body>
+    
+    <a id="arma5-unlocked" class="proxy-target"></a>
+    <a id="arma9-unlocked" class="proxy-target"></a>
+
+    <header>
+        <h1>Arsenal Táctico: Armamento Ligero y Pesado</h1>
+    </header>
+
+    <div class="currency-display">
+        Créditos = 
+        <span id="credit-initial" class="currency-total">100,000 ⌬</span>
+        <span id="credit-after-5" class="currency-total">80,000 ⌬</span>
+        <span id="credit-after-9" class="currency-total">50,000 ⌬</span>
+    </div>
+
+    <main>
+        <input type="radio" name="weapon-selector" id="select-arma1" class="hidden-radio" checked>
+        <input type="radio" name="weapon-selector" id="select-arma2" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma3" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma4" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma5" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma6" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma7" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma8" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma9" class="hidden-radio">
+        <input type="radio" name="weapon-selector" id="select-arma10" class="hidden-radio">
+
+        <div class="visor-3d-area">
+            
+            <model-viewer id="model-arma1" class="arma-model" src="ARMA1.glb" alt="Rifle de Asalto 'Vanguard'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma1" class="arma-info-display">
+                <h2>Rifle de Asalto</h2>
+                <p>Clase: Asalto Estándar</p>
+                <p>Especialidad: Arma versátil para combate de medio alcance.</p>
+                <p>Munición: 5.56mm de alta velocidad.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 60%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 75%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 65%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 70%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma2" class="arma-model" src="arma2.glb" alt="Lanzagranadas 'Demolition'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma2" class="arma-info-display">
+                <h2>Lanzagranadas</h2>
+                <p>Clase: Explosivos</p>
+                <p>Especialidad: Limpieza de zonas y destrucción de estructuras ligeras.</p>
+                <p>Munición: Granadas de 40mm.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 25%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 70%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 55%;"></div></div></div>
+                </div>
+            </div>
+            
+            <model-viewer id="model-arma3" class="arma-model" src="arma3.glb" alt="Ametralladora 'Fury'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma3" class="arma-info-display">
+                <h2>Ametralladora "Fury"</h2>
+                <p>Clase: Fuego de Supresión</p>
+                <p>Especialidad: Mantener al enemigo a raya con fuego constante.</p>
+                <p>Munición: 7.62mm de gran calibre.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 75%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 95%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 60%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 40%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma4" class="arma-model" src="arma4.glb" alt="Rifle Táctico 'Hammer'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma4" class="arma-info-display">
+                <h2>Rifle Táctico "Hammer"</h2>
+                <p>Clase: Batalla/Semi-Automático</p>
+                <p>Especialidad: Combate preciso a larga distancia sin mira telescópica.</p>
+                <p>Munición: 7.62mm de precisión.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 80%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 45%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 85%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 80%;"></div></div></div>
+                </div>
+            </div>
+
+
+            <model-viewer id="model-arma5" class="arma-model" src="arma5.glb" alt="Rifle de Francotirador 'Ghost'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-arma5" class="arma-info-display">
+                
+                <div class="arma-locked-overlay">
+                    <span class="tag-bloqueado">BLOQUEADO</span>
+                    <a href="#arma5-unlocked" class="buy-button-overlay">Comprar - 20,000 ⌬</a>
+                </div>
+
+                <h2>Rifle de Francotirador "Ghost"</h2>
+                <p>Clase: Precisión</p>
+                <p>Especialidad: Abatir objetivos a distancias extremas.</p>
+                <p>Alcance: Extremo.</p>
+                
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 10%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 95%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma6" class="arma-model" src="arma6.glb" alt="Ametralladora Pesada 'Titan'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma6" class="arma-info-display">
+                <h2>Pistola "Sentinel"</h2>
+                <p>Clase: Arma de respaldo</p>
+                <p>Especialidad: Rápida extracción y combate a corta distancia.</p>
+                <p>Munición: 9mm de penetración.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 35%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 50%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 40%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 70%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma7" class="arma-model" src="arma7.glb" alt="Escopeta de Combate 'Reaper'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma7" class="arma-info-display">
+                <h2>Subfusil "Stealth"</h2>
+                <p>Clase: CQC (Combate a Corta Distancia)</p>
+                <p>Especialidad: Máxima movilidad y cadencia.</p>
+                <p>Munición: .45 ACP subsonica.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 50%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 30%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 65%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma8" class="arma-model" src="arma8.glb" alt="Pistola de Plasma 'Nebula'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma8" class="arma-info-display">
+                <h2>Sistema de Mortero</h2>
+                <p>Clase: Apoyo Indirecto</p>
+                <p>Especialidad: Ataques de área fuera de la línea de visión.</p>
+                <p>Munición: Proyectil de alto explosivo.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 95%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 15%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 30%;"></div></div></div>
+                </div>
+            </div>
+
+
+            <model-viewer id="model-arma9" class="arma-model" src="arma9.glb" alt="Lanza-cohetes 'Oblivion'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-arma9" class="arma-info-display">
+
+                <div class="arma-locked-overlay">
+                    <span class="tag-bloqueado">BLOQUEADO</span>
+                    <a href="#arma9-unlocked" class="buy-button-overlay">Comprar - 50,000 ⌬</a>
+                </div>
+
+                <h2>Lanzacohetes</h2>
+                <p>Clase: Anti-Vehículos</p>
+                <p>Especialidad: Destrucción masiva por impacto.</p>
+                <p>Alcance: Largo.</p>
+                
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 5%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 50%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-arma10" class="arma-model" src="arma10.glb" alt="Ballesta 'Hunter'" auto-rotate camera-controls shadow></model-viewer>
+            <div id="info-arma10" class="arma-info-display">
+                <h2>Cuchillo "Hunter"</h2>
+                <p>Clase: CQC / Sigilo</p>
+                <p>Especialidad: Eliminación silenciosa e instantánea a corta distancia.</p>
+                <p>Alcance: Cuerpo a cuerpo.</p>
+                <div class="weapon-stats">
+                    <div class="stat-row"><span class="stat-name">Daño</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Cadencia</span><div class="stat-bar-container"><div class="stat-bar" style="width: 30%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Alcance</span><div class="stat-bar-container"><div class="stat-bar" style="width: 5%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Precisión</span><div class="stat-bar-container"><div class="stat-bar" style="width: 100%;"></div></div></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="weapon-grid-container">
+            <div class="category-row">
+                <section class="weapon-grid">
+                    <label for="select-arma1">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/rifleasalto2.png" alt="Icono Vanguard">
+                            <span class="weapon-item-name">Rifle de Asalto</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma2">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/Gemini_Generated_Image_txmgvatxmgvatxmg-Photoroom (1).png" alt="Icono Demolition">
+                            <span class="weapon-item-name">Lanzagranadas</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma3">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/ametralladora.png" alt="Icono Fury">
+                            <span class="weapon-item-name">Ametralladora "Fury"</span>
+                        </div>
+                    </label>
+                    
+                    <label for="select-arma4">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/francotirador.png" alt="Icono Hammer">
+                            <span class="weapon-item-name">Rifle Táctico "Hammer"</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma5">
+                        <div class="weapon-item locked" id="grid-arma5">
+                            <img class="weapon-item-icon" src="./img/escopeta.png" alt="Icono Ghost">
+                            <span class="weapon-item-name">Rifle Sniper "Ghost"</span>
+                        </div>
+                    </label>
+                </section>
+            </div>
+
+            <div class="category-row">
+                <section class="weapon-grid">
+                    <label for="select-arma6">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/pistola.png" alt="Icono Titan">
+                            <span class="weapon-item-name">Pistola "Sentinel"</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma7">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/subfusil.png" alt="Icono Reaper">
+                            <span class="weapon-item-name">Subfusil "Stealth"</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma8">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/devastador.png" alt="Icono Nebula">
+                            <span class="weapon-item-name">Sistema de Mortero</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma9">
+                        <div class="weapon-item locked" id="grid-arma9">
+                            <img class="weapon-item-icon" src="./img/s7195wjd.png" alt="Icono Oblivion">
+                            <span class="weapon-item-name">Lanzacohetes</span>
+                        </div>
+                    </label>
+
+                    <label for="select-arma10">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/cuchillo.png" alt="Icono Hunter">
+                            <span class="weapon-item-name">Cuchillo "Hunter"</span>
+                        </div>
+                    </label>
+                </section>
+            </div>
+        </div>
+
+        <div class="navigation-buttons">
+            <a href="index.html" style="text-decoration: none;"><button class="nav-button">Inicio</button></a>
+            <a href="vehiculos.html" style="text-decoration: none;"><button class="nav-button">Siguiente</button></a>
+        </div>
+
+    </main>
+</body>
+
+</html>

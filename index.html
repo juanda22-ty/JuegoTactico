@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comando Frontera - Acceso Táctico 🛡️ (CSS ONLY MAX)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@600;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- VARIABLES Y RESET --- */
+        :root {
+            --color-fondo: #010408;
+            --color-acento: #00BFFF; /* Azul Neón */
+            --color-acento-hover: #1E90FF;
+            --color-texto-claro: #e9ecef;
+            /* Sombra Neón Extrema */
+            --sombra-neon: 0 0 10px rgba(0, 191, 255, 0.9), 0 0 35px rgba(0, 191, 255, 0.6), 0 0 60px rgba(30, 144, 255, 0.4); 
+            --tiempo-carga-inicial: 3.5s; /* Duración de la pantalla de BOOT */
+            --tiempo-hud-activo: 2s; /* Cuánto tiempo permanece la barra de HUD */
+            --delay-botones: calc(var(--tiempo-carga-inicial) + 1s); 
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--color-fondo);
+            color: var(--color-texto-claro);
+            line-height: 1.6;
+            overflow: hidden; 
+            opacity: 0;
+            animation: fadeInBody 0.1s forwards var(--tiempo-carga-inicial); 
+        }
+
+        /* ---------------------------------
+           --- KEYFRAMES Y ANIMACIONES ---
+           --------------------------------- */
+        
+        @keyframes pulse-neon {
+            0%, 100% { text-shadow: 0 0 8px var(--color-acento), 0 0 15px var(--color-acento-hover); }
+            50% { text-shadow: 0 0 12px var(--color-acento), 0 0 35px var(--color-acento-hover); }
+        }
+
+        /* Glitch y Flicker Extremo (Duración: 1.5s) */
+        @keyframes glitch-flicker-heavy {
+            0%, 100% { clip-path: inset(0 0 0 0); }
+            10% { clip-path: inset(1% 0 96% 0); transform: translateX(-5px); }
+            20% { clip-path: inset(20% 0 70% 0); transform: translateX(5px); }
+            40% { clip-path: inset(80% 0 10% 0); transform: translateX(10px); }
+            57% { clip-path: inset(10% 0 85% 0); transform: translateX(-3px); }
+            70% { clip-path: inset(70% 0 20% 0); transform: translateX(-8px); }
+            90% { clip-path: inset(40% 0 55% 0); transform: translateX(-4px); }
+        }
+
+        /* Animación de Entrada y Desvanecimiento de la Barra HUD */
+        @keyframes hud-fadeIn {
+            0% { opacity: 0; transform: translateY(100%); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(100%); }
+        }
+        
+        /* Animaciones de entrada/salida */
+        @keyframes typing { from { width: 0 } to { width: 450px; } }
+        @keyframes blink-caret { 0%, 50% { border-right: 4px solid var(--color-acento); } 51%, 100% { border-right: 4px solid transparent; } }
+        @keyframes fadeInTitle { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInBody { to { opacity: 1; } }
+
+        /* ---------------------------------
+           --- ESTRUCTURA PRINCIPAL (CENTRADA) ---
+           --------------------------------- */
+        
+        .hero-section {
+            position: relative; 
+            z-index: 10; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; /* Centrado Vertical */
+            align-items: center; /* Centrado Horizontal */
+            text-align: center; 
+            padding: 2rem;
+        }
+
+        /* ---------------------------------
+           --- BARRA DE HUD ---
+           --------------------------------- */
+        .system-hud {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 120px;
+            padding: 15px 30px; background: rgba(10, 11, 13, 0.9); border-top: 2px solid var(--color-acento);
+            box-shadow: 0 -5px 30px rgba(0, 191, 255, 0.3); z-index: 50; 
+            pointer-events: none; overflow: hidden;
+            opacity: 0;
+            animation: hud-fadeIn 1s forwards, fadeOut 0.5s forwards calc(var(--tiempo-carga-inicial) + var(--tiempo-hud-activo));
+            animation-delay: var(--tiempo-carga-inicial);
+            display: flex; justify-content: space-between;
+        }
+
+        .hud-log, .hud-status {
+            font-size: 0.8rem; color: #79ddff; line-height: 1.4; white-space: pre-wrap;
+            position: relative;
+            animation: pulse-neon 4s infinite alternate;
+        }
+
+        .hud-status {
+            text-align: right; border-left: 1px solid rgba(0, 191, 255, 0.3); padding-left: 30px;
+        }
+        
+        /* ---------------------------------
+           --- TÍTULO Y BOTONES ---
+           --------------------------------- */
+        
+        .game-title {
+            font-family: 'Orbitron', sans-serif; font-size: 8rem; font-weight: 900;
+            color: var(--color-acento); text-transform: uppercase; letter-spacing: 12px; margin-bottom: 2rem;
+            animation: pulse-neon 1.5s infinite alternate, glitch-flicker-heavy 1.5s infinite steps(1) alternate, fadeInTitle 1s forwards var(--tiempo-carga-inicial);
+            position: relative; 
+            opacity: 0;
+        }
+
+        .game-title::after {
+            content: "COMANDO FRONTERA";
+            position: absolute; top: 0; left: 0;
+            color: red; text-shadow: 0 0 5px red;
+            clip-path: inset(0 0 95% 0);
+            animation: glitch-flicker-heavy 2.5s infinite alternate-reverse;
+        }
+
+        .central-nav {
+            margin-top: 4rem; display: flex; flex-direction: row; 
+            align-items: center; justify-content: center; gap: 30px; 
+        }
+
+        .nav-button, .settings-button {
+            padding: 1rem 3rem; background-color: var(--color-acento); color: var(--color-fondo);
+            border: 3px solid var(--color-acento-hover); border-radius: 5px; text-decoration: none;
+            transition: all 0.2s ease, box-shadow 0.5s; text-transform: uppercase; letter-spacing: 3px;
+            font-weight: 900; font-size: 1.1rem; cursor: pointer; transform: skewX(-5deg); 
+            box-shadow: var(--sombra-neon); 
+            animation: pulse-neon 2s infinite alternate, fadeInTitle 1s forwards var(--delay-botones);
+            opacity: 0;
+        }
+        
+        /* ESTILO ESPECÍFICO PARA EL BOTÓN DE AJUSTES/ENGRANAJE */
+        .settings-button {
+            /* Mantenemos el tamaño y estilo para que el engranaje sea visible */
+            padding: 1rem 1.5rem; /* Menor padding lateral para centrar el icono */
+            font-size: 1.8rem; /* Tamaño grande para el ícono de engranaje */
+            letter-spacing: normal; /* No queremos espaciado extra en el icono */
+            background-color: transparent; 
+            color: var(--color-acento); 
+            border-color: var(--color-acento);
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+            animation: pulse-neon 3s infinite alternate-reverse, glitch-flicker-heavy 7s infinite steps(1), fadeInTitle 1s forwards var(--delay-botones);
+        }
+        
+        .nav-button:hover, .settings-button:hover {
+            background-color: var(--color-acento-hover);
+            transform: skewX(-5deg) scale(1.05);
+            box-shadow: 0 0 40px var(--color-acento-hover), 0 0 15px var(--color-acento) inset;
+        }
+        .settings-button:hover {
+            background-color: rgba(0, 191, 255, 0.1);
+            color: var(--color-acento-hover);
+            /* Animación de rotación al pasar el mouse */
+            transform: skewX(-5deg) scale(1.05) rotate(15deg); 
+        }
+
+        .nav-button:active, .settings-button:active { 
+            transform: scale(0.95); 
+            background-color: var(--color-fondo); 
+            color: var(--color-acento);
+        }
+        
+        /* --- ESTILOS DE FONDO Y CARGA --- */
+        .video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
+        #trailer-video { min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover; filter: brightness(1.2) contrast(1.1) grayscale(30%); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: -1; }
+        .scanline-effect { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99; pointer-events: none; opacity: 0.15; background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.4) 2px, rgba(0, 0, 0, 0.1) 3px); background-size: 100% 4px; animation: scanline-flicker 0.2s infinite alternate; }
+        .page-entry-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--color-fondo); z-index: 9999; animation: fadeOut 0.5s forwards var(--tiempo-carga-inicial); pointer-events: none; }
+        .page-entry-overlay::before { content: "SYSTEM BOOTING | DEPLOYING ASSETS.EXE"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--color-acento); overflow: hidden; width: 0; white-space: nowrap; animation: typing 2.5s steps(40) forwards, blink-caret 0.75s step-end infinite; }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .game-title { font-size: 4rem; letter-spacing: 8px; }
+            .central-nav { flex-direction: column; gap: 15px; }
+            .nav-button { padding: 0.8rem 2.5rem; transform: skewX(0); font-size: 1rem; }
+            .settings-button { padding: 0.8rem 1.2rem; font-size: 1.5rem; transform: skewX(0); }
+            .page-entry-overlay::before { font-size: 1rem; }
+            .system-hud { height: 80px; padding: 10px 20px; }
+            .hud-log, .hud-status { font-size: 0.7rem; }
+            .hud-status { display: none; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="page-entry-overlay"></div> 
+
+    <div class="scanline-effect"></div>
+
+    <div class="video-background">
+        <video id="trailer-video" autoplay muted loop>
+            <source src="./img/WhatsApp Video 2025-09-13 at 8.41.41 AM.mp4" type="video/mp4">
+            Tu navegador no soporta video HTML5.
+        </video>
+    </div>
+    <div class="overlay"></div>
+
+    <header class="hero-section">
+        <h1 class="game-title">COMANDO FRONTERA</h1>
+
+        <div class="central-nav">
+            <a href="#" class="nav-button settings-button">⚙️</a>
+            
+            <a href="armamento.html" class="nav-button">INICIAR</a>
+        </div>
+    </header>
+
+    <div class="system-hud">
+        <div class="hud-log">
+            [CMD] INITIALIZING_CORE... OK
+            [ASSET] WEAPONS_DB.LOADED (87%)
+            [SEC] WARNING: INTERFACE FLICKER DETECTED
+        </div>
+        <div class="hud-status">
+            OPERATOR: COMMANDER_ALPHA | TIME: 04:04:52 P.M. 
+            <br>
+            SYSTEM STATUS: <span style="color: #ff9900;">HIGH_ALERT</span>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        © 2025 COMANDO FRONTERA. | Protocolo de Operaciones: 
+        <a href="#" class="footer-link">Riesgo Alto</a> |
+        <a href="#" class="footer-link">Desclasificar Datos</a>
+    </footer>
+    
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehículos - Comando Frontera</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@600;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- Variables y Reset --- */
+        :root {
+            --color-fondo: #0a0b0d;
+            --color-panel: #1e252f;
+            --color-borde: #3a414e;
+            --color-texto-claro: #e9ecef;
+            /* AZUL NEÓN / CIAN MANTENIDO */
+            --color-acento: #00BFFF; /* Azul Cielo Brillante */
+            --color-acento-hover: #1E90FF; /* Azul Doder (más intenso para hover) */
+            --sombra-neon: 0 0 10px rgba(0, 191, 255, 0.9), 0 0 25px rgba(0, 191, 255, 0.6); 
+            --sombra-sutil: 0 4px 15px rgba(0, 0, 0, 0.8);
+            --borde-delgado: 1px solid var(--color-acento);
+
+            /* VARIABLES DE COMPRA CSS-ONLY */
+            --color-moneda: #c9e66d; /* Verde Neo para botón de compra */
+            --color-bloqueo: #dc3545; /* Rojo para Bloqueado */
+        }
+
+        /* Animación de Título (Sutil pulso de brillo) */
+        @keyframes pulse-neon {
+            0% { text-shadow: var(--sombra-neon); }
+            50% { text-shadow: 0 0 15px var(--color-acento), 0 0 35px var(--color-acento-hover); }
+            100% { text-shadow: var(--sombra-neon); }
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--color-fondo);
+            color: var(--color-texto-claro);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        header {
+            text-align: center;
+            padding: 25px 0;
+            background-color: var(--color-panel);
+            border-bottom: var(--borde-delgado);
+            box-shadow: var(--sombra-sutil);
+        }
+
+        header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--color-acento);
+            text-shadow: var(--sombra-neon);
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            margin: 0;
+            animation: pulse-neon 4s infinite alternate ease-in-out;
+        }
+        
+        /* --- DISPLAY DE CRÉDITOS (Entre Header y Main) --- */
+        .currency-display {
+            /* Eliminamos fixed y usamos flex/margin para centrar */
+            width: fit-content;
+            margin: 15px auto 25px auto; 
+            z-index: 100; 
+
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-moneda);
+            text-shadow: 0 0 10px rgba(201, 230, 109, 0.5);
+            padding: 10px 30px;
+            border: 2px solid var(--color-moneda);
+            border-radius: 50px; /* Estilo de píldora */
+            background-color: rgba(10, 11, 13, 0.85); 
+            box-shadow: 0 0 15px rgba(201, 230, 109, 0.5);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Lógica de Ocultar/Mostrar Créditos */
+        .currency-display .currency-total {
+            display: none;
+        }
+        .currency-display #credit-initial {
+            display: inline;
+        }
+        #vehiculo3-unlocked:target ~ .currency-display #credit-initial,
+        #vehiculo5-unlocked:target ~ .currency-display #credit-initial {
+            display: none; 
+        }
+        #vehiculo3-unlocked:target ~ .currency-display #credit-after-3 {
+            display: inline;
+        }
+        #vehiculo5-unlocked:target ~ .currency-display #credit-after-5 {
+            display: inline;
+        }
+        
+        /* --- Contenedor Principal y Estilos de Vehículos --- */
+        main {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 0 20px 20px 20px;
+        }
+
+        .visor-3d-area {
+            height: 60vh;
+            min-height: 450px;
+            width: 100%;
+            background: linear-gradient(to top, #000, #1e252f);
+            border: 2px solid var(--color-acento);
+            box-shadow: var(--sombra-neon);
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vehiculo-model, .vehiculo-info-display { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s, transform 0.5s; pointer-events: none; transform: translateY(20px); 
+        }
+        
+        .vehiculo-info-display { 
+            width: 350px; height: auto; top: 40px; left: 40px; z-index: 10; background: rgba(30, 37, 47, 0.8); backdrop-filter: blur(5px); border: 1px solid var(--color-acento); border-left: 5px solid var(--color-acento); padding: 20px; box-shadow: var(--sombra-sutil); 
+        }
+
+        /* --- ESTILOS DE COMPRAS CSS-ONLY --- */
+        .vehiculo-locked-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(10, 11, 13, 0.95); backdrop-filter: blur(4px); z-index: 100; pointer-events: auto; opacity: 1; transition: opacity 0.5s;
+        }
+
+        .tag-bloqueado {
+            font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--color-bloqueo); text-shadow: 0 0 15px var(--color-bloqueo); margin-bottom: 25px; border: 2px solid var(--color-bloqueo); padding: 10px 20px; letter-spacing: 5px;
+        }
+
+        .buy-button-overlay {
+            padding: 12px 30px; font-family: 'Orbitron', sans-serif; font-size: 1.1em; font-weight: 700; color: var(--color-fondo); background-color: var(--color-moneda); border: 2px solid var(--color-moneda); border-radius: 5px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; box-shadow: 0 0 15px var(--color-moneda); text-decoration: none;
+        }
+        .buy-button-overlay:hover {
+            box-shadow: 0 0 25px var(--color-moneda), 0 0 10px rgba(0, 0, 0, 0.5) inset; transform: scale(1.05);
+        }
+
+        /* Lógica de radio y target */
+        .hidden-radio { display: none; }
+        
+        /* Muestra el overlay si el radio está checked y no desbloqueado */
+        #select-vehiculo3:checked ~ .visor-3d-area #info-vehiculo3 .vehiculo-locked-overlay,
+        #select-vehiculo5:checked ~ .visor-3d-area #info-vehiculo5 .vehiculo-locked-overlay { opacity: 1; pointer-events: auto; display: flex; }
+
+        /* Oculta el overlay si el target de desbloqueo está activo */
+        #vehiculo3-unlocked:target ~ .visor-3d-area #info-vehiculo3 .vehiculo-locked-overlay,
+        #vehiculo5-unlocked:target ~ .visor-3d-area #info-vehiculo5 .vehiculo-locked-overlay { opacity: 0; pointer-events: none; display: none; }
+
+        /* Estilo para mostrar el modelo y la info activa */
+        #select-vehiculo1:checked ~ .visor-3d-area #model-vehiculo1,
+        #select-vehiculo1:checked ~ .visor-3d-area #info-vehiculo1,
+        #select-vehiculo2:checked ~ .visor-3d-area #model-vehiculo2,
+        #select-vehiculo2:checked ~ .visor-3d-area #info-vehiculo2,
+        #select-vehiculo3:checked ~ .visor-3d-area #model-vehiculo3,
+        #select-vehiculo3:checked ~ .visor-3d-area #info-vehiculo3,
+        #select-vehiculo4:checked ~ .visor-3d-area #model-vehiculo4,
+        #select-vehiculo4:checked ~ .visor-3d-area #info-vehiculo4,
+        #select-vehiculo5:checked ~ .visor-3d-area #model-vehiculo5,
+        #select-vehiculo5:checked ~ .visor-3d-area #info-vehiculo5 {
+            opacity: 1; transform: scale(1.0) translateY(0); pointer-events: auto;
+        }
+
+        /* Grilla Bloqueada y Desbloqueo por Target */
+        .weapon-item.locked { filter: grayscale(100%) brightness(50%); border-color: var(--color-bloqueo); box-shadow: 0 0 10px var(--color-bloqueo); }
+
+        /* Quita el bloqueo de la grilla si el target está activo */
+        #vehiculo3-unlocked:target ~ main .vehicle-grid-container #grid-vehiculo3,
+        #vehiculo5-unlocked:target ~ main .vehicle-grid-container #grid-vehiculo5 { 
+             filter: none; border-color: var(--color-acento-hover); box-shadow: 0 0 15px var(--color-acento), 0 0 5px var(--color-acento-hover); 
+        }
+
+        /* Estilos menores */
+        .vehicle-grid-container {padding: 10px 0;margin: 0 auto;max-width: 1100px;}
+        .vehicle-grid {display: flex;justify-content: center;flex-wrap: wrap;gap: 20px;}
+        .weapon-item:hover { border-color: var(--color-acento); box-shadow: 0 0 15px var(--color-acento), 0 0 8px var(--color-acento-hover); transform: translateY(-5px); }
+        .weapon-item {width: 180px;height: 130px;background-color: var(--color-panel);border: 1px solid var(--color-borde);cursor: pointer;transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);position: relative;overflow: hidden;display: flex;flex-direction: column;justify-content: flex-end;margin-bottom: 15px;}
+        .weapon-item-icon {width: 90%;height: 75%;object-fit: contain;margin: auto;filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.8));}
+        .weapon-item-name {background-color: rgba(0, 0, 0, 0.7);padding: 5px;font-size: 0.8em;text-align: center;color: #eee;font-family: 'Orbitron', sans-serif;text-transform: uppercase;}
+        .navigation-buttons {display: flex;justify-content: center;gap: 40px;padding: 25px 0;margin-top: 30px;border-top: var(--borde-delgado);}
+        .nav-button {padding: 15px 40px;font-size: 1.2em;font-family: 'Orbitron', sans-serif;font-weight: 700;color: var(--color-fondo);background-color: var(--color-acento);border: 2px solid var(--color-acento);border-radius: 8px;cursor: pointer;transition: all 0.2s ease;text-transform: uppercase;box-shadow: 0 0 20px var(--color-acento), 0 0 5px var(--color-fondo) inset;}
+        .nav-button:hover {background-color: var(--color-acento-hover);box-shadow: 0 0 30px var(--color-acento-hover), 0 0 15px var(--color-acento);transform: scale(1.05);}
+        .nav-button:active { transform: scale(0.95); background-color: var(--color-fondo); color: var(--color-acento); }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9em; font-family: 'Orbitron', sans-serif; text-transform: uppercase; }
+        .stat-bar-container { flex-grow: 1; height: 10px; background-color: rgba(30, 37, 47, 0.5); border-radius: 5px; overflow: hidden; margin-left: 10px; box-shadow: 0 0 3px rgba(0, 0, 0, 0.5); }
+        .stat-bar { height: 100%; background-color: var(--color-acento); transition: width 0.5s ease-out; box-shadow: 0 0 8px var(--color-acento); }
+
+    </style>
+</head>
+
+<body>
+    
+    <a id="vehiculo3-unlocked" class="proxy-target"></a>
+    <a id="vehiculo5-unlocked" class="proxy-target"></a>
+    
+    <header>
+        <h1>Flota Táctica: Vehículos de Combate y Reconocimiento</h1>
+    </header>
+
+    <div class="currency-display">
+        Créditos = 
+        <span id="credit-initial" class="currency-total">100,000 ⌬</span>
+        <span id="credit-after-3" class="currency-total">85,000 ⌬</span>
+        <span id="credit-after-5" class="currency-total">70,000 ⌬</span>
+    </div>
+
+    <main>
+        
+        <input type="radio" name="vehicle-selector" id="select-vehiculo1" class="hidden-radio" checked>
+        <input type="radio" name="vehicle-selector" id="select-vehiculo2" class="hidden-radio">
+        <input type="radio" name="vehicle-selector" id="select-vehiculo3" class="hidden-radio">
+        <input type="radio" name="vehicle-selector" id="select-vehiculo4" class="hidden-radio">
+        <input type="radio" name="vehicle-selector" id="select-vehiculo5" class="hidden-radio">
+
+        <div class="visor-3d-area">
+            
+            <model-viewer id="model-vehiculo1" class="vehiculo-model" src="vehiculo4.glb" alt="Tanque de Combate 'Titán'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-vehiculo1" class="vehiculo-info-display">
+                <h2>Titán (Tanque Pesado)</h2>
+                <p>Clase: Asalto Terrestre</p>
+                <p>Especialidad: Liderar el asalto y absorber el daño.</p>
+                <p>Tripulación: 4 (Piloto, Artillero, Cargador, Comandante).</p>
+                <div class="vehicle-stats">
+                    <div class="stat-row"><span class="stat-name">Durabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Poder de Fuego</span><div class="stat-bar-container"><div class="stat-bar" style="width: 85%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Velocidad Máxima</span><div class="stat-bar-container"><div class="stat-bar" style="width: 40%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Maniobrabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 30%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-vehiculo2" class="vehiculo-model" src="vehiulo3.glb" alt="Helicóptero de Ataque 'Vigilante'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-vehiculo2" class="vehiculo-info-display">
+                <h2>Vigilante (Helicóptero)</h2>
+                <p>Clase: Apoyo Aéreo</p>
+                <p>Especialidad: Reconocimiento y supresión de infantería.</p>
+                <p>Tripulación: 2 (Piloto, Artillero).</p>
+                <div class="vehicle-stats">
+                    <div class="stat-row"><span class="stat-name">Durabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 60%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Poder de Fuego</span><div class="stat-bar-container"><div class="stat-bar" style="width: 75%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Velocidad Máxima</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Maniobrabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 80%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-vehiculo3" class="vehiculo-model" src="vehiculo6.glb" alt="Lancha de Asalto 'Torpedo'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-vehiculo3" class="vehiculo-info-display">
+                
+                <div class="vehiculo-locked-overlay">
+                    <span class="tag-bloqueado">BLOQUEADO</span>
+                    <a href="#vehiculo3-unlocked" class="buy-button-overlay">Comprar - 15,000 ⌬</a>
+                </div>
+
+                <h2>Torpedo (Asalto Anfibio)</h2>
+                <p>Clase: Incursión Rápida</p>
+                <p>Especialidad: Despliegue de tropas en zonas costeras.</p>
+                <p>Tripulación: 2 + 6 Pasajeros.</p>
+                <div class="vehicle-stats">
+                    <div class="stat-row"><span class="stat-name">Durabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 50%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Poder de Fuego</span><div class="stat-bar-container"><div class="stat-bar" style="width: 60%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Velocidad Máxima</span><div class="stat-bar-container"><div class="stat-bar" style="width: 95%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Maniobrabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 70%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-vehiculo4" class="vehiculo-model" src="vehiculo1.glb" alt="Jeep Táctico 'Ghost'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-vehiculo4" class="vehiculo-info-display">
+                <h2>Ghost (Jeep Táctico)</h2>
+                <p>Clase: Reconocimiento</p>
+                <p>Especialidad: Flanqueo y transporte rápido de personal.</p>
+                <p>Tripulación: 1 + 3 Pasajeros.</p>
+                <div class="vehicle-stats">
+                    <div class="stat-row"><span class="stat-name">Durabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 30%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Poder de Fuego</span><div class="stat-bar-container"><div class="stat-bar" style="width: 40%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Velocidad Máxima</span><div class="stat-bar-container"><div class="stat-bar" style="width: 85%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Maniobrabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 95%;"></div></div></div>
+                </div>
+            </div>
+
+            <model-viewer id="model-vehiculo5" class="vehiculo-model" src="vehiculo5.glb" alt="Dron de Ataque 'Sentinel'" auto-rotate camera-controls shadow>
+            </model-viewer>
+            <div id="info-vehiculo5" class="vehiculo-info-display">
+
+                <div class="vehiculo-locked-overlay">
+                    <span class="tag-bloqueado">BLOQUEADO</span>
+                    <a href="#vehiculo5-unlocked" class="buy-button-overlay">Comprar - 30,000 ⌬</a>
+                </div>
+
+                <h2>Sentinel (Dron)</h2>
+                <p>Clase: Vigilancia/Ataque</p>
+                <p>Especialidad: Ataques quirúrgicos de alta precisión.</p>
+                <p>Tripulación: No tripulado (Operador remoto).</p>
+                <div class="vehicle-stats">
+                    <div class="stat-row"><span class="stat-name">Durabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 20%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Poder de Fuego</span><div class="stat-bar-container"><div class="stat-bar" style="width: 70%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Velocidad Máxima</span><div class="stat-bar-container"><div class="stat-bar" style="width: 75%;"></div></div></div>
+                    <div class="stat-row"><span class="stat-name">Maniobrabilidad</span><div class="stat-bar-container"><div class="stat-bar" style="width: 90%;"></div></div></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="vehicle-grid-container">
+            <div class="category-row">
+                <section class="vehicle-grid">
+                    
+                    <label for="select-vehiculo1">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/rifleasalto2.png" alt="Icono Tanque Titan">
+                            <span class="weapon-item-name">Tanque "Titán"</span>
+                        </div>
+                    </label>
+
+                    <label for="select-vehiculo2">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/lanzagranadas.png" alt="Icono Helicóptero Vigilante">
+                            <span class="weapon-item-name">Heli. "Vigilante"</span>
+                        </div>
+                    </label>
+                    
+                    <label for="select-vehiculo3">
+                        <div class="weapon-item locked" id="grid-vehiculo3">
+                            <img class="weapon-item-icon" src="./img/ametralladora.png" alt="Icono Lancha Torpedo">
+                            <span class="weapon-item-name">Lancha "Torpedo"</span>
+                        </div>
+                    </label>
+                    
+                    <label for="select-vehiculo4">
+                        <div class="weapon-item">
+                            <img class="weapon-item-icon" src="./img/francotirador.png" alt="Icono Jeep Ghost">
+                            <span class="weapon-item-name">Jeep "Ghost"</span>
+                        </div>
+                    </label>
+
+                    <label for="select-vehiculo5">
+                        <div class="weapon-item locked" id="grid-vehiculo5">
+                            <img class="weapon-item-icon" src="./img/escopeta.png" alt="Icono Dron Sentinel">
+                            <span class="weapon-item-name">Dron "Sentinel"</span>
+                        </div>
+                    </label>
+
+                </section>
+            </div>
+        </div>
+
+        <div class="navigation-buttons">
+            <a href="armamento.html" style="text-decoration: none;"><button class="nav-button">Armamento</button></a>
+            <a href="index.html" style="text-decoration: none;"><button class="nav-button">Inicio</button></a>
+        </div>
+
+    </main>
+</body>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+</html>
